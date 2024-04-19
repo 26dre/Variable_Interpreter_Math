@@ -3,19 +3,19 @@
 // const RESERVED_KEYWORD_SET: [&str; 2] = ["var", "computation"];
 #[derive(Debug, PartialEq)]
 pub enum Token {
-    IDENTIFIER (String), 
-    NUMBER (usize), 
-    OPEN_PAREN, 
-    CLOSE_PAREN, 
-    MINUS, 
-    PLUS, 
+    IDENTIFIER(String),
+    NUMBER(usize),
+    OPEN_PAREN,
+    CLOSE_PAREN,
+    MINUS,
+    PLUS,
     TIMES,
-    DIVIDE, 
-    SEMICOLON, 
+    DIVIDE,
+    SEMICOLON,
     PERIOD,
-    COMPUTATION, 
-    VAR, 
-    ASSIGNMENT
+    COMPUTATION,
+    VAR,
+    ASSIGNMENT,
 }
 fn reserved_keyword(input_str: &str) -> Option<Token> {
     let tmp = input_str.to_ascii_lowercase();
@@ -64,10 +64,10 @@ impl Tokenizer {
     fn peek_curr_char_unsafe(&self) -> char {
         self.vec_string[self.position]
     }
-    
-    fn build_identifier(&mut self) -> String{
-        let mut ret_str = String::new(); 
-        while self.peek_curr_char().unwrap_or('\0').is_alphanumeric(){
+
+    fn build_identifier(&mut self) -> String {
+        let mut ret_str = String::new();
+        while self.peek_curr_char().unwrap_or('\0').is_alphanumeric() {
             ret_str.push(self.peek_curr_char_unsafe());
             self.next();
         }
@@ -76,23 +76,22 @@ impl Tokenizer {
     }
 
     fn build_number(&mut self) -> usize {
-        let mut ret_num: usize = 0; 
-        while self.peek_curr_char().unwrap_or('\0').is_alphanumeric(){
-            ret_num *= 10; 
+        let mut ret_num: usize = 0;
+        while self.peek_curr_char().unwrap_or('\0').is_alphanumeric() {
+            ret_num *= 10;
             // ret_num += ((self.peek_curr_char_unsafe()).to_digit(10)).unwrap();
             ret_num += self.peek_curr_char_unsafe().to_digit(10).unwrap() as usize;
-
         }
         ret_num
     }
 
     fn skip_whitespace(&mut self) {
-        while self.peek_curr_char().unwrap_or('\0').is_whitespace(){
+        while self.peek_curr_char().unwrap_or('\0').is_whitespace() {
             self.position += 1;
         }
     }
-    
-    pub fn identify_token (&mut self) -> Token {
+
+    pub fn identify_token(&mut self) -> Token {
         self.skip_whitespace();
         let in_char = self.peek_curr_char().unwrap_or('\0');
 
@@ -102,14 +101,15 @@ impl Tokenizer {
             '/' => Token::DIVIDE,
             '*' => Token::TIMES,
             ';' => Token::SEMICOLON,
-            '+' => Token::PLUS, 
-            '-' => Token::MINUS, 
-            _ => self.identify_longer_token()
-                }
+            '+' => Token::PLUS,
+            '-' => Token::MINUS,
+            '.' => Token::PERIOD,
+            _ => self.identify_longer_token(),
+        }
     }
 
-    fn identify_longer_token (&mut self) -> Token {
-        let mut in_char = self.peek_curr_char().unwrap_or('\0') ;
+    fn identify_longer_token(&mut self) -> Token {
+        let mut in_char = self.peek_curr_char().unwrap_or('\0');
         if in_char.is_alphabetic() {
             let ident_string = self.build_identifier();
             if reserved_keyword(&ident_string).is_some() {
@@ -131,5 +131,65 @@ impl Tokenizer {
         } else {
             panic!("Invalid type shit")
         }
+    }
+}
+
+#[cfg(test)]
+mod tokenizer_tests {
+
+    use crate::tokenizer::{build_tokenizer, Token, Tokenizer};
+    #[test]
+    fn identifier_test() {
+        let mut test: Tokenizer = build_tokenizer("hello");
+        let identify_token = test.identify_token();
+        assert_eq!(identify_token, Token::IDENTIFIER("hello".to_string()))
+    }
+    #[test]
+    fn opening_paren_test() {
+        let mut test: Tokenizer = build_tokenizer("( hello");
+        let identify_token = test.identify_token();
+        assert_eq!(identify_token, Token::OPEN_PAREN)
+    }
+    #[test]
+    fn var_assignment_test() {
+        let mut test: Tokenizer = build_tokenizer("<- ");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::ASSIGNMENT);
+    }
+    #[test]
+    fn var_test() {
+        let mut test: Tokenizer = build_tokenizer("var");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::VAR);
+    }
+    #[test]
+    fn computation_test() {
+        let mut test: Tokenizer = build_tokenizer("computation");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::COMPUTATION);
+    }
+    #[test]
+    fn computation_test_capital() {
+        let mut test: Tokenizer = build_tokenizer("comPUtaTion");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::COMPUTATION);
+    }
+    #[test]
+    fn semicolon_test() {
+        let mut test: Tokenizer = build_tokenizer(";");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::SEMICOLON);
+    }
+    #[test]
+    fn period_test() {
+        let mut test: Tokenizer = build_tokenizer(".");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::PERIOD);
     }
 }
