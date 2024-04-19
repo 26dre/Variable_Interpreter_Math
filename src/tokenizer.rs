@@ -1,7 +1,10 @@
-use std::collections::HashSet;
-enum Token {
+// use std::collections::HashSet;
+
+// const RESERVED_KEYWORD_SET: [&str; 2] = ["var", "computation"];
+#[derive(Debug, PartialEq)]
+pub enum Token {
     IDENTIFIER (String), 
-    NUMBER (isize), 
+    NUMBER (usize), 
     OPEN_PAREN, 
     CLOSE_PAREN, 
     MINUS, 
@@ -11,29 +14,39 @@ enum Token {
     SEMICOLON, 
     PERIOD,
     COMPUTATION, 
-    VAR
+    VAR, 
+    ASSIGNMENT
+}
+fn reserved_keyword(input_str: &str) -> Option<Token> {
+    let tmp = input_str.to_ascii_lowercase();
+    if tmp == "var" {
+        Some(Token::VAR)
+    } else if tmp == "computation" {
+        Some(Token::COMPUTATION)
+    } else {
+        None
+    }
 }
 
 #[derive(Debug, Default)]
-struct Tokenizer {
+pub struct Tokenizer {
     vec_string: Vec<char>,
     position: usize,
 }
 
-fn build_tokenizer(input_str: &str) -> Tokenizer {
+pub fn build_tokenizer(input_str: &str) -> Tokenizer {
     Tokenizer {
         vec_string: input_str.chars().collect(),
         position: 0,
     }
 }
 
-
-
-
-
 impl Tokenizer {
-    fn next(&mut self) {
+    fn next(&mut self) -> Option<char> {
+        //returns the char previous to going to the next character
+        let tmp = self.peek_curr_char();
         self.position += 1;
+        tmp
     }
 
     fn backtrack(&mut self) {
@@ -51,12 +64,12 @@ impl Tokenizer {
     fn peek_curr_char_unsafe(&self) -> char {
         self.vec_string[self.position]
     }
-
+    
     fn build_identifier(&mut self) -> String{
         let mut ret_str = String::new(); 
         while self.peek_curr_char().unwrap_or('\0').is_alphanumeric(){
             ret_str.push(self.peek_curr_char_unsafe());
-            self.next()
+            self.next();
         }
 
         ret_str
@@ -78,11 +91,43 @@ impl Tokenizer {
             self.position += 1;
         }
     }
-
-
     
+    pub fn identify_token (&mut self) -> Token {
+        self.skip_whitespace();
+        let in_char = self.peek_curr_char().unwrap_or('\0');
 
+        match in_char {
+            '(' => Token::OPEN_PAREN,
+            ')' => Token::CLOSE_PAREN,
+            '/' => Token::DIVIDE,
+            '*' => Token::TIMES,
+            ';' => Token::SEMICOLON,
+            '+' => Token::PLUS, 
+            '-' => Token::MINUS, 
+            _ => self.identify_longer_token()
+                }
+    }
 
-
-
+    fn identify_longer_token (&mut self) -> Token {
+        let mut in_char = self.peek_curr_char().unwrap_or('\0') ;
+        if in_char.is_alphabetic() {
+            let ident_string = self.build_identifier();
+            if reserved_keyword(&ident_string).is_some() {
+                return reserved_keyword(&ident_string).unwrap();
+            } else {
+                return Token::IDENTIFIER(ident_string);
+            }
+        } else if in_char.is_numeric() {
+            Token::NUMBER(self.build_number())
+        } else if in_char == '<' {
+            in_char = self.next().unwrap_or('\0');
+            if in_char == '-' {
+                Token::ASSIGNMENT
+            } else {
+                panic!("Invalid variable")
+            }
+        } else {
+            panic!("Invalid type shit")
+        }
+    }
 }

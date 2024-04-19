@@ -6,12 +6,19 @@ pub fn add(left: usize, right: usize) -> usize {
 
 #[cfg(test)]
 mod tokenizer_tests {
-    use super::*;
+    
+    // use super::*;
+    // use tokenizer::Tokenizer;
+
+    use crate::tokenizer::{self, build_tokenizer, Tokenizer};
 
     #[test]
     fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+        let mut test: Tokenizer = build_tokenizer("hello");
+        let identify_token = test.identify_token();
+        assert_eq!(identify_token, tokenizer::Token::IDENTIFIER("hello".to_string()) )
+
+
     }
 }
 
