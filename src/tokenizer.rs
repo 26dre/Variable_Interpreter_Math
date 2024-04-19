@@ -28,7 +28,7 @@ fn reserved_keyword(input_str: &str) -> Option<Token> {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Tokenizer {
     vec_string: Vec<char>,
     position: usize,
@@ -87,7 +87,7 @@ impl Tokenizer {
 
     fn skip_whitespace(&mut self) {
         while self.peek_curr_char().unwrap_or('\0').is_whitespace() {
-            self.position += 1;
+            self.next();
         }
     }
 
@@ -191,5 +191,13 @@ mod tokenizer_tests {
         let identify_token = test.identify_token();
         println!("curr token result = {:?}", identify_token);
         assert_eq!(identify_token, Token::PERIOD);
+    }
+
+    #[test]
+    fn whitespace_testing() {
+        let mut test: Tokenizer = build_tokenizer("                 cargo    ");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::IDENTIFIER("cargo".to_string()));
     }
 }
