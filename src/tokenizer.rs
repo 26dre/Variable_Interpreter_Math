@@ -120,7 +120,9 @@ impl Tokenizer {
         } else if in_char.is_numeric() {
             Token::NUMBER(self.build_number())
         } else if in_char == '<' {
-            in_char = self.next().unwrap_or('\0');
+            self.next();
+            in_char = self.peek_curr_char().unwrap_or('\0');
+            println!("Next = {}", in_char);
             if in_char == '-' {
                 Token::ASSIGNMENT
             } else {

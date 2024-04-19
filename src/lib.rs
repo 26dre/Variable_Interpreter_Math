@@ -10,15 +10,25 @@ mod tokenizer_tests {
     // use super::*;
     // use tokenizer::Tokenizer;
 
-    use crate::tokenizer::{self, build_tokenizer, Tokenizer};
-
+    use crate::tokenizer::{self, build_tokenizer, Tokenizer, Token};
     #[test]
-    fn it_works() {
+    fn identifier_test() {
         let mut test: Tokenizer = build_tokenizer("hello");
         let identify_token = test.identify_token();
-        assert_eq!(identify_token, tokenizer::Token::IDENTIFIER("hello".to_string()) )
-
-
+        assert_eq!(identify_token, Token::IDENTIFIER("hello".to_string()) )
+    }
+    #[test]
+    fn opening_paren_test() {
+        let mut test: Tokenizer = build_tokenizer("( hello");
+        let identify_token = test.identify_token();
+        assert_eq!(identify_token, Token::OPEN_PAREN )
+    }
+    #[test]
+    fn var_assignment_test() {
+        let mut test: Tokenizer = build_tokenizer("<- ");
+        let identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::ASSIGNMENT );
     }
 }
 
