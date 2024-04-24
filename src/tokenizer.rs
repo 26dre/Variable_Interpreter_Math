@@ -1,7 +1,7 @@
 // use std::collections::HashSet;
 
 // const RESERVED_KEYWORD_SET: [&str; 2] = ["var", "computation"];
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Token {
     IDENTIFIER(String),
     NUMBER(usize),
@@ -16,7 +16,11 @@ pub enum Token {
     COMPUTATION,
     VAR,
     ASSIGNMENT,
+    NONE,
 }
+
+
+
 fn reserved_keyword(input_str: &str) -> Option<Token> {
     let tmp = input_str.to_ascii_lowercase();
     if tmp == "var" {
@@ -77,7 +81,7 @@ impl Tokenizer {
 
     fn build_number(&mut self) -> usize {
         let mut ret_num: usize = 0;
-        while self.peek_curr_char().unwrap_or('\0').is_alphanumeric() {
+        while self.peek_curr_char().unwrap_or('\0').is_numeric() {
             ret_num *= 10;
             // ret_num += ((self.peek_curr_char_unsafe()).to_digit(10)).unwrap();
             ret_num += self.peek_curr_char_unsafe().to_digit(10).unwrap() as usize;
@@ -93,7 +97,7 @@ impl Tokenizer {
 
     pub fn identify_token(&mut self) -> Token {
         self.skip_whitespace();
-        let in_char = self.peek_curr_char().unwrap_or('\0');
+        let in_char = self.next().unwrap_or('\0');
 
         match in_char {
             '(' => Token::OPEN_PAREN,
@@ -104,7 +108,11 @@ impl Tokenizer {
             '+' => Token::PLUS,
             '-' => Token::MINUS,
             '.' => Token::PERIOD,
-            _ => self.identify_longer_token(),
+            '\0' => Token::NONE,
+            _ => {
+                self.backtrack();
+                self.identify_longer_token()
+            }
         }
     }
 
@@ -199,5 +207,89 @@ mod tokenizer_tests {
         let identify_token = test.identify_token();
         println!("curr token result = {:?}", identify_token);
         assert_eq!(identify_token, Token::IDENTIFIER("cargo".to_string()));
+    }
+    #[test]
+    fn two_tokens() {
+        let mut test: Tokenizer = build_tokenizer("                 cargo   check ");
+        let mut identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::IDENTIFIER("cargo".to_string()));
+        identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::IDENTIFIER("check".to_string()));
+    }
+    #[test]
+    fn two_tokens_no_whitespace() {
+        let mut test: Tokenizer = build_tokenizer("                 cargo+ ");
+        let mut identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::IDENTIFIER("cargo".to_string()));
+        identify_token = test.identify_token();
+        println!("curr token result = {:?}", identify_token);
+        assert_eq!(identify_token, Token::PLUS);
+    }
+    #[test]
+    fn lots_of_tokens() {
+        let mut test: Tokenizer =
+            build_tokenizer("                 cargo+-hello var computation * / . ");
+        let mut token_vec: Vec<Token> = Vec::new();
+        let mut identify_token = test.identify_token();
+        while identify_token != Token::NONE {
+            token_vec.push(identify_token);
+            identify_token = test.identify_token();
+            println!("{:?}", identify_token);
+        }
+
+        println!("{:?}", token_vec);
+        assert_eq!(token_vec.len(), 9);
+    }
+    #[test]
+    #[should_panic]
+    fn panic_num() {
+        let mut test: Tokenizer =
+            build_tokenizer("                 cargo+-949he var computation * / . ");
+        let mut token_vec: Vec<Token> = Vec::new();
+        let mut identify_token = test.identify_token();
+        while identify_token != Token::NONE {
+            token_vec.push(identify_token);
+            identify_token = test.identify_token();
+            println!("{:?}", identify_token);
+        }
+
+        println!("{:?}", token_vec);
+        assert_eq!(token_vec.len(), 9);
+    }
+
+    #[test]
+    #[should_panic]
+    fn panic2() {
+        let mut test: Tokenizer =
+            build_tokenizer("                 cargo<+-hello var computation * / . ");
+        let mut token_vec: Vec<Token> = Vec::new();
+        let mut identify_token = test.identify_token();
+        while identify_token != Token::NONE {
+            token_vec.push(identify_token);
+            identify_token = test.identify_token();
+            println!("{:?}", identify_token);
+        }
+
+        println!("{:?}", token_vec);
+        assert_eq!(token_vec.len(), 9);
+    }
+    #[test]
+    #[should_panic]
+    fn panic3() {
+        let mut test: Tokenizer =
+            build_tokenizer("                 [cargo+-hello var computation * / . ");
+        let mut token_vec: Vec<Token> = Vec::new();
+        let mut identify_token = test.identify_token();
+        while identify_token != Token::NONE {
+            token_vec.push(identify_token);
+            identify_token = test.identify_token();
+            println!("{:?}", identify_token);
+        }
+
+        println!("{:?}", token_vec);
+        assert_eq!(token_vec.len(), 9);
     }
 }
