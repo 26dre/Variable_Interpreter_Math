@@ -123,6 +123,7 @@ impl Parser {
     fn set_next_token(&mut self, in_token: Token) {
         self.curr_token = in_token;
     }
+    
 }
 
 #[cfg(test)]

@@ -85,6 +85,7 @@ impl Tokenizer {
             ret_num *= 10;
             // ret_num += ((self.peek_curr_char_unsafe()).to_digit(10)).unwrap();
             ret_num += self.peek_curr_char_unsafe().to_digit(10).unwrap() as usize;
+            self.next();
         }
         ret_num
     }
@@ -114,6 +115,46 @@ impl Tokenizer {
                 self.identify_longer_token()
             }
         }
+    }
+
+    pub fn peek_token (&mut self) -> Token {
+        let curr_token = self.identify_token();
+        match &curr_token {
+            Token::NONE => {
+                
+            }, 
+            Token::IDENTIFIER(identifier_str) => {
+                for _i in 0..identifier_str.len() {
+                    self.backtrack();
+                }
+            }, 
+            Token::NUMBER(num) => {
+                let tmp_num = num.to_string();
+                for _i in 0..tmp_num.len() {
+                    self.backtrack();
+                }
+            }, 
+            Token::ASSIGNMENT => {
+                for _i in 0..2 {
+                    self.backtrack();
+                }
+            }, 
+            Token::VAR => {
+                for _i in 0..("var".len()){
+                    self.backtrack();
+                }
+            }, 
+            Token::COMPUTATION => {
+                for _i in 0..("computation".len()){
+                    self.backtrack();
+                }
+            }, 
+            _ => {
+                self.backtrack();
+            } 
+        }
+
+        curr_token
     }
 
     fn identify_longer_token(&mut self) -> Token {
@@ -151,6 +192,12 @@ mod tokenizer_tests {
         let mut test: Tokenizer = build_tokenizer("hello");
         let identify_token = test.identify_token();
         assert_eq!(identify_token, Token::IDENTIFIER("hello".to_string()))
+    }
+    #[test]
+    fn number_test() {
+        let mut test: Tokenizer = build_tokenizer("1234");
+        let identify_token = test.identify_token();
+        assert_eq!(identify_token, Token::NUMBER(1234))
     }
     #[test]
     fn opening_paren_test() {
@@ -292,4 +339,34 @@ mod tokenizer_tests {
         println!("{:?}", token_vec);
         assert_eq!(token_vec.len(), 9);
     }
+
+    #[test]
+    fn test_peek () {
+        let mut test: Tokenizer =
+        build_tokenizer("                 cargo+-hello var computation * / . "); 
+        let mut identify_tok = test.peek_token(); 
+        assert_eq!(identify_tok, Token::IDENTIFIER("cargo".to_string()));
+        identify_tok = test.peek_token();
+        assert_eq!(identify_tok, Token::IDENTIFIER("cargo".to_string()));
+    }
+    #[test]
+    fn test_peek_num() {
+        let mut test: Tokenizer =
+        build_tokenizer("                 1234-hello var computation * / . "); 
+        let mut identify_tok = test.peek_token(); 
+        assert_eq!(identify_tok, Token::NUMBER(1234));
+        identify_tok = test.peek_token();
+        assert_eq!(identify_tok, Token::NUMBER(1234));
+    }
+    #[test]
+    fn test_peek_one_char() {
+        let mut test: Tokenizer =
+        build_tokenizer("                 1234-hello var computation * / . "); 
+        let mut identify_tok = test.identify_token(); 
+        identify_tok = test.peek_token();
+        assert_eq!(identify_tok, Token::MINUS);
+        identify_tok = test.peek_token();
+        assert_eq!(identify_tok, Token::MINUS);
+    }
+
 }
