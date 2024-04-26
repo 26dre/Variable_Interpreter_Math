@@ -11,7 +11,7 @@ pub struct Parser {
     variable_assignments: HashMap<String, isize>,
     curr_token: Token, //    string_iter:
 }
-
+///Initializes the parser from an input string references
 pub fn init_parser(in_str: &String) -> Parser {
     Parser {
         internal_tokenizer: tokenizer::build_tokenizer(&in_str),

@@ -4,14 +4,13 @@ use parser::init_parser;
 pub mod parser;
 pub mod tokenizer;
 pub mod get_input;
-
+///Will interpret all instructions given until :q is received at which point it will quit out of the function
 pub fn interpret_instructions () -> Vec<Vec<isize>> {
     // get_input::get_input_continuously();
 
     let mut input_str = get_input(); 
     let mut ret_vec: Vec<Vec<isize>> = Vec::new();
 
-    input_str = get_input();
 
     while input_str != "!q" {
         let mut curr_parser = init_parser(&input_str);
