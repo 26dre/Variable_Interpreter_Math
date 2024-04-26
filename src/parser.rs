@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+// use colored::Colorize;
+// use stduse colored::Colorize;
+use colored::Colorize;
 
-// use std::
 use crate::tokenizer::{self, build_tokenizer, Token, Tokenizer};
 
 #[derive(Debug, PartialEq)]
@@ -34,18 +36,54 @@ pub fn match_similar<T: std::fmt::Debug + Eq>(lhs: &T, rhs: &T) -> bool {
     if rhs == lhs {
         return true;
     } else {
-        panic!("Syntax incorrect {:?} is not equivalent to {:?}", lhs, rhs);
+        panic!("{}{:?} is not equivalent to {:?}", "Syntax incorrect ".red(),lhs, rhs);
     }
 }
 
 
 impl Parser {
-    fn parse_input(&mut self) -> Vec<isize> {
-        let ret_vec = Vec::new();
+    pub fn parse_input(&mut self) -> Vec<isize> {
+        let mut ret_vec = Vec::new();
 
         self.get_and_set_next_token();
-        // match self.curr_token {
-        //     Token::IDENTIFIER(_)
+
+        match_similar(&self.curr_token, &Token::COMPUTATION); 
+        self.computation_handler();
+        let mut val:isize = 0; 
+
+        while self.curr_token != Token::NONE {
+            
+            match self.peek_token() {
+                Token::VAR => {
+                    self.var_preprocessor();
+                    self.var_handler();
+                }, 
+                Token::SEMICOLON => {
+                    self.get_and_set_next_token();
+                }, 
+                Token::PERIOD => {
+                    self.set_next_token(Token::NONE);
+                    // self.get_and_set_next_token();
+                    // ret_vec.push(val);
+                    // println!("Result : {val}");
+                    // val = 0; 
+
+                    // if self.curr_token != Token::NONE{
+                    //     match_similar(&self.peek_token(), &Token::COMPUTATION);
+                    //     self.get_and_set_next_token();
+                    // }
+
+                }, 
+                _ => {
+                    val += self.handle_expression();
+                    ret_vec.push(val);
+                    println!("{val}");
+                    val = 0; 
+                }
+            }
+        }
+        // if self.curr_token == Token::NONE {
+        //     ret_vec.push(val);
         // }
 
         ret_vec
@@ -54,7 +92,7 @@ impl Parser {
  
     fn handle_expression(&mut self) -> isize {
         // -9999
-        self.get_and_set_next_token();
+        // self.get_and_set_next_token();
         println!("Evaluating curr token {:?}", self.curr_token);
         let mut ret_val: isize = self.handle_term() as isize;
 
@@ -120,6 +158,7 @@ impl Parser {
             Token::OPEN_PAREN => {
                 // self.get_and_set_next_token();
                 println!("\t\tChanged next token to {:?} from OPEN_PAREN", self.curr_token);
+                self.get_and_set_next_token();
                 let temp = self.handle_expression();
                 match_similar(&self.curr_token, &Token::CLOSE_PAREN);
                 self.get_and_set_next_token();
@@ -128,28 +167,36 @@ impl Parser {
 
             
             _ => {
-                println!("\t\thandle_factor Evaluating current token of {:?} before panicking", self.curr_token);
-                panic!("Syntax incorrect, expected number or opening paren, not this ");
+                println!("\t\t{}{} {:?} {}", "Factor ".blue().bold(), "Evaluating current token of".bright_red(), self.curr_token,  "before panicking".bright_red());
+                panic!("{}", "Syntax incorrect, expected number or opening paren, not this ".red());
             }
         }
     }
 
+    fn var_preprocessor (&mut self) {
+        match_similar(&Token::VAR, &self.curr_token);
+        self.get_and_set_next_token();
+        // match_similar(&Token::ASSIGNMENT, &self.curr_token);
+        // self.get_and_set_next_token(); 
+       
+    }
     fn var_handler(&mut self) {
 
-        self.get_and_set_next_token();
-        // match_similar(&self.curr_token, &Token::IDENTIFIER());
+       
 
-        let string: String = match &mut self.curr_token {
+        let string: String = match &self.curr_token {
             Token::IDENTIFIER(input_str) => {
                 input_str.to_string()
             },
-            _ => panic!("Incorrect syntax in variable declaration")
+            _ => panic!("{} {:?} {} {}", "Incorrect syntax in variable declaration received token".red(), self.curr_token,"but expected".red(), "IDENTIFIER".red().bold() )
         };
 
         self.get_and_set_next_token();
         match_similar(&self.curr_token, &Token::ASSIGNMENT);
 
         println!("{:?}", self.curr_token);
+
+        self.get_and_set_next_token();
         
         let val = self.handle_expression();
 
@@ -191,14 +238,16 @@ impl Parser {
     //     }
     // }
 
-    fn assignment_handler(&mut self, var_name: &str) {
+   
 
-    }
+    // fn assignment_handler(&mut self, var_name: &str) {
 
-    fn semicolon_handler(&mut self) {
-        match_similar(&self.curr_token, &Token::SEMICOLON);
-        self.get_and_set_next_token();
-    }
+    // }
+
+    // fn semicolon_handler(&mut self) {
+    //     match_similar(&self.curr_token, &Token::SEMICOLON);
+    //     self.get_and_set_next_token();
+    // }
 
     fn get_next_token(&mut self) -> Token {
         // Token::NONE
@@ -228,11 +277,13 @@ impl Parser {
 }
 
 #[cfg(test)]
-mod parser_test {
+
+mod internal_parser_test{
     use super::*;
     #[test]
     fn handle_expression_addition_test() {
         let mut test_parser = init_parser(&"140 + 14".to_string());
+        test_parser.get_and_set_next_token();
 
         let x = test_parser.handle_expression();
 
@@ -241,6 +292,7 @@ mod parser_test {
     #[test]
     fn handle_expression_multiplication() {
         let mut test_parser = init_parser(&"140 * 10".to_string());
+        test_parser.get_and_set_next_token();
 
         let x = test_parser.handle_expression();
 
@@ -249,6 +301,7 @@ mod parser_test {
     #[test]
     fn handle_expression_parentheses() {
         let mut test_parser = init_parser(&"10 * (11+2)".to_string());
+        test_parser.get_and_set_next_token();
 
         let x = test_parser.handle_expression();
 
@@ -258,12 +311,15 @@ mod parser_test {
     #[test]
     fn handle_expression_addl() {
         let mut test_parser = init_parser(&"(((100*20)+10)+(3+1)))".to_string());
+        test_parser.get_and_set_next_token();
         let x = test_parser.handle_expression();
         assert_eq!(2014, x);
     }
     #[test]
     fn var_test() {
         let mut test_parser = init_parser(&"hello <- 10".to_string());
+        // test_parser.get_and_set_next_token();
+        test_parser.get_and_set_next_token();
         let x = test_parser.var_handler();
         println!("{:?}" , test_parser.variable_assignments);
         assert_eq!(*test_parser.variable_assignments.get(&"hello".to_string()).unwrap(), 10 as isize);
@@ -271,11 +327,13 @@ mod parser_test {
     #[test]
     fn var_test_assignement() {
         let mut test_parser = init_parser(&"hello <- 10".to_string());
+        test_parser.get_and_set_next_token();
         let x = test_parser.var_handler();
         println!("{:?}" , test_parser.variable_assignments);
         assert_eq!(*test_parser.variable_assignments.get(&"hello".to_string()).unwrap(), 10 as isize);
 
         test_parser.internal_tokenizer = build_tokenizer("hello + 11");
+        test_parser.get_and_set_next_token();
         let y = test_parser.handle_expression();
         assert_eq!(y, 21);
 
