@@ -1,22 +1,28 @@
+use get_input::get_input;
+use parser::init_parser;
+
 pub mod parser;
 pub mod tokenizer;
-///Im a little retarded
-// pub fn add(left: usize, right: usize) -> usize {
-    
-//     left + right
-// }
+pub mod get_input;
 
+pub fn interpret_instructions () -> Vec<Vec<isize>> {
+    // get_input::get_input_continuously();
 
-// #[cfg(test)]
-// mod other_tests {
+    let mut input_str = get_input(); 
+    let mut ret_vec: Vec<Vec<isize>> = Vec::new();
 
-//     use super::*;
-//     // #[test]
-//     fn its_me_mario() {
-//         let result = add(2, 2);
-//         assert_eq!(result, 4);
-//     }
-// }
+    input_str = get_input();
+
+    while input_str != "!q" {
+        let mut curr_parser = init_parser(&input_str);
+        ret_vec.push(curr_parser.parse_input());
+        input_str = get_input();
+
+    }
+
+    ret_vec
+
+}
 #[cfg(test)]
 mod tokenizer_tests {
 
@@ -263,4 +269,21 @@ mod parser_test {
         assert_eq!(x[0], 240);
         assert_eq!(x[1], 2400);
     } 
+}
+
+
+#[cfg(test)]
+mod input_tests {
+    use crate::get_input::*;
+    #[test]
+    fn input_hello () {
+        let x = get_input();
+        println!("You entered the string {}", x); 
+        assert_eq!(&x, &"hello".to_string())
+    }
+
+    #[test]
+    fn infinite() {
+        get_input_continuously();
+    }
 }
